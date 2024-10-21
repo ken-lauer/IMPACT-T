@@ -59,10 +59,14 @@ if(USE_MPI)
 endif()
 add_executable(${OUTPUT_NAME})
 
+find_package(FFTW3 REQUIRED)
+list(APPEND _libraries fftw3)
+
 if(USE_MPI)
     find_package(MPI REQUIRED)
     target_compile_definitions(${OUTPUT_NAME} PUBLIC USE_MPI)
-    target_link_libraries(${OUTPUT_NAME} PUBLIC MPI::MPI_Fortran)
+    list(APPEND _libraries MPI::MPI_Fortran)
+
     include_directories(${MPI_Fortran_INCLUDE_PATH})
     
     # Allow type mismatch for GCC 10
@@ -84,6 +88,8 @@ else()
     # Add include dir above into search path
     target_include_directories(${OUTPUT_NAME} PRIVATE $<BUILD_INTERFACE:${ImpactT_BINARY_DIR}/include>)
 endif()
+
+target_link_libraries(${OUTPUT_NAME} PUBLIC ${_libraries})
 
 # Associate source files with target
 target_sources(${OUTPUT_NAME} PRIVATE ${_sources})
