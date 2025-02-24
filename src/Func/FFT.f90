@@ -23,6 +23,47 @@
         module procedure fftrclocal1_FFT,fftrclocal2_FFT
       end interface
       contains
+
+
+
+
+      subroutine complex_fft3d(a,b,idir,n1,n2,n3,iskiptrans)
+        use, intrinsic :: iso_c_binding
+        use omp_lib
+        implicit none
+        include 'fftw3.f03'
+
+        integer :: idir(3)
+        type(C_PTR) :: plan
+        complex(C_DOUBLE_COMPLEX), dimension(:,:,:) ::a, b
+        integer :: dir, fdir, n1, n2, n3, iskiptrans, n_threads
+
+        if (idir(1) == 1) then
+          fdir = FFTW_BACKWARD
+        else
+          fdir = FFTW_FORWARD
+        endif
+
+        !$ n_threads = omp_get_max_threads()
+        !$ if (n_threads > 1) then
+        !! !$   print *, '  FFTW with n_threads: ', n_threads
+        !$   call fftw_plan_with_nthreads(n_threads)
+        !$ endif
+
+        plan = fftw_plan_dft_3d(n3,n2,n1, a,b, fdir,FFTW_ESTIMATE)
+        call fftw_execute_dft(plan,a, b)
+        call fftw_destroy_plan(plan)
+
+        !$ if (n_threads > 1) call fftw_cleanup_threads()
+
+
+      end subroutine
+
+
+
+
+
+
 !----------------------------------------------------------------
 ! FFT for 3D open boundary conditions. 
 ! The original computational domain is doubled in each dimension
@@ -589,50 +630,103 @@ return
 end subroutine four1
 
 !real fast Fourier tranform 
-subroutine realft(data,n,isign)
-  integer isign, n
-  real*8 data(n)
-  real ( kind = 8 ) r(n)
-  integer ( kind = 4 ) ier
-  integer ( kind = 4 ) inc
-  integer ( kind = 4 ) lenr
-  integer ( kind = 4 ) lensav
-  integer ( kind = 4 ) lenwrk
-  real ( kind = 8 ), allocatable, dimension ( : ) :: work
-  real ( kind = 8 ), allocatable, dimension ( : ) :: wsave
+! subroutine realft(data,n,isign)
+!   integer isign, n
+!   real*8 data(n)
+!   real ( kind = 8 ) r(n)
+!   integer ( kind = 4 ) ier
+!   integer ( kind = 4 ) inc
+!   integer ( kind = 4 ) lenr
+!   integer ( kind = 4 ) lensav
+!   integer ( kind = 4 ) lenwrk
+!   real ( kind = 8 ), allocatable, dimension ( : ) :: work
+!   real ( kind = 8 ), allocatable, dimension ( : ) :: wsave
+! 
+!   lensav = n + int ( log ( real ( n, kind = 4 ) ) / log ( 2.0E+00 ) ) + 4
+!   lenwrk = n
+! 
+!   allocate ( work(1:lenwrk) )
+!   allocate ( wsave(1:lensav) )
+! !Initialization
+!   call rfft1i ( n, wsave, lensav, ier )
+!    inc = 1
+!   lenr = n
+!       
+! if (isign.eq.1) then
+! !transfer the data to the fftpack style
+! 	call Rvec_nr2pack_rfft1f(r,n,data)
+! !real forward fast Fourier transform with fftpack
+!        call rfft1f ( n, inc, r, lenr, wsave, lensav, work, lenwrk, ier )
+! !transfer the data back to the nr style 
+! 	call Rvec_pack2nr_rfft1f (r, n, data)
+! 
+! else
+!        call Rvec_nr2pack_rfft1b(r,n,data)
+! !real backward fast Fourier transform with fftpack
+! 	call rfft1b ( n, inc, r, lenr, wsave, lensav, work, lenwrk, ier )
+! !transfer the data back to the nr style 
+! 	call Rvec_pack2nr_rfft1b (r, n, data)
+! endif
+! 
+!   deallocate ( work )
+!   deallocate ( wsave )
+! 
+! return
+! 
+! end subroutine realft
 
-  lensav = n + int ( log ( real ( n, kind = 4 ) ) / log ( 2.0E+00 ) ) + 4
-  lenwrk = n
+      !subroutine realft(data, n, dir)
+      !  use, intrinsic :: iso_c_binding
+      !  implicit none
+      !  include 'fftw3.f03'
+      !  integer :: dir, fdir, n
+      !  type(C_PTR) :: plan
+      !  complex(C_DOUBLE_COMPLEX), dimension(n) :: data, out
+      !  real*8, dimension(n) :: data, out
+      !
+      !  if (dir == 1) then
+      !    fdir = FFTW_BACKWARD
+      !  else
+      !    fdir = FFTW_FORWARD
+      !  endif
+      !
+      !  plan = fftw_plan_dft_1d(n, data, data, fdir, FFTW_ESTIMATE)
+      !  call fftw_execute_dft(plan, data, data)
+      !  call fftw_destroy_plan(plan)
+      !
+      !end subroutine
+  subroutine realft(data, n, isign)
 
-  allocate ( work(1:lenwrk) )
-  allocate ( wsave(1:lensav) )
-!Initialization
-  call rfft1i ( n, wsave, lensav, ier )
-   inc = 1
-  lenr = n
-      
-if (isign.eq.1) then
-!transfer the data to the fftpack style
-	call Rvec_nr2pack_rfft1f(r,n,data)
-!real forward fast Fourier transform with fftpack
-       call rfft1f ( n, inc, r, lenr, wsave, lensav, work, lenwrk, ier )
-!transfer the data back to the nr style 
-	call Rvec_pack2nr_rfft1f (r, n, data)
+    use, intrinsic :: iso_c_binding
+    include 'fftw3.f03'
 
-else
-       call Rvec_nr2pack_rfft1b(r,n,data)
-!real backward fast Fourier transform with fftpack
-	call rfft1b ( n, inc, r, lenr, wsave, lensav, work, lenwrk, ier )
-!transfer the data back to the nr style 
-	call Rvec_pack2nr_rfft1b (r, n, data)
-endif
+    implicit none
+    integer, intent(in) :: n, isign
+    real*8, intent(inout) :: data(n)
+    real*8, allocatable :: r(:)
+    ! type(fftw_plan) :: plan
+    type(C_PTR) :: plan
 
-  deallocate ( work )
-  deallocate ( wsave )
+    allocate(r(n))
 
-return
+    if (isign .eq. 1) then
+      ! Plan forward FFT
+      plan = fftw_plan_dft_r2c_1d(n, data, r, FFTW_ESTIMATE)
+      ! Execute forward FFT
+      call fftw_execute(plan)
+    else
+      ! Plan backward FFT
+      plan = fftw_plan_dft_c2r_1d(n, r, data, FFTW_ESTIMATE)
+      ! Execute backward FFT
+      call fftw_execute(plan)
+    endif
 
-end subroutine realft
+    call fftw_destroy_plan(plan)
+    deallocate(r)
+    call fftw_cleanup()
+    
+    return
+  end subroutine realft
 
 !fast discrete sine transform
 subroutine sinft(y,ny)
