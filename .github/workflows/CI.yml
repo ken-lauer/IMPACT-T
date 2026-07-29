@@ -43,6 +43,8 @@ jobs:
 
       - name: Test - mpich
         if: matrix.mpi == 'mpich'
+        env:
+          UCX_TLS: tcp,self,sm
         run: |
           cd $GITHUB_WORKSPACE/examples/Sample1
           # NOTE: MPICH on GitHub Actions runners fail to allocate more than 1
@@ -101,6 +103,8 @@ jobs:
 
       - name: Test - mpich
         if: matrix.mpi == 'mpich'
+        env:
+          UCX_TLS: tcp,self,sm
         run: |
           cd $GITHUB_WORKSPACE/examples/Sample1
           # NOTE: MPICH on GitHub Actions runners fail to allocate more than 1
