@@ -99,7 +99,7 @@ all: .PrepareMPI $(EXENAME)
 .DEFAULT_GOAL := all
 
 $(EXENAME):  $(OBJS)
-	$(LINK) -o $(EXENAME) $(OBJS2)
+	$(LINK) -o $(EXENAME) $(OBJS2) $(LIBS)
 #************************************************************************
 # if you wish to compile a certain object with different flags
 # or in some special way, then specify the target & dependency explicitly

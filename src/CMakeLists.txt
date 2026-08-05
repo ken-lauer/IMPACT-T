@@ -110,6 +110,13 @@ if(USE_FFTW)
         target_link_libraries(${OUTPUT_NAME} PUBLIC ${FFTW3_LIBRARY})
         target_include_directories(${OUTPUT_NAME} PRIVATE ${FFTW3_INCLUDE_DIR})
     endif()
+    # gfortran needs -I to resolve the Fortran `include 'fftw3.f03'`, but
+    # pkg-config often omits standard include dirs (e.g. /usr/include on
+    # Debian/Ubuntu). Locate the header explicitly and add it.
+    find_path(FFTW3_F03_INCLUDE_DIR NAMES fftw3.f03 HINTS ${FFTW3_INCLUDE_DIRS})
+    if(FFTW3_F03_INCLUDE_DIR)
+        target_include_directories(${OUTPUT_NAME} PRIVATE ${FFTW3_F03_INCLUDE_DIR})
+    endif()
 else()
     list(APPEND _sources Func/FFT.f90)
 endif()
