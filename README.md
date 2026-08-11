@@ -76,6 +76,9 @@ These can have a large, beneficial impact on IMPACT-T's performance.
 
 ```bash
 # Check your FFLAGS first of course!
+# Remove any -march or -mtune options that exist.
+FFLAGS=$(echo "$FFLAGS" | sed -E 's/-m(arch|tune)=[^ ]+//g')
+
 cmake -S src/ -B build-fftw -DUSE_MPI=ON -DUSE_FFTW=ON -DCMAKE_Fortran_FLAGS="$FFLAGS -march=native -mtune=native"
 cmake --build build-fftw -j 4
 ls build-fftw/ImpactTexe-mpi
