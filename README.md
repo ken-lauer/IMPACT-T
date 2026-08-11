@@ -42,7 +42,7 @@ If you just want to use CMake to build the project, jump into sections _1. Intro
 Create a build environment like so:
 
 ```bash
-conda create -n impactt-build -c conda-forge compilers cmake openmpi
+conda create -n impactt-build -c conda-forge compilers cmake openmpi 'fftw=*=mpi_openmpi*'
 conda activate impactt-build
 ```
 
